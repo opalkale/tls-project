@@ -306,8 +306,53 @@ receive_tls_message(int socketno, void *msg, int msg_len, int msg_type)
 static void
 perform_rsa(mpz_t result, mpz_t message, mpz_t e, mpz_t n)
 {
+  /* STAFF SOLUTION */
+  int odd_num;
+
+  mpz_set_str(result, "1", 10);
+  odd_num = mpz_odd_p(e);
+  while (mpz_cmp_ui(e, 0) > 0) {
+    if (odd_num) {
+      mpz_mul(result, result, message);
+      mpz_mod(result, result, n);
+      mpz_sub_ui(e, e, 1);
+    }
+    mpz_mul(message, message, message);
+    mpz_mod(message, message, n);
+    mpz_div_ui(e, e, 2);
+    odd_num = mpz_odd_p(e);
+  }
 }
 
+static void
+usage()
+{
+    printf("./proj0 -m <message_file> -n <modulus_file> -d <key_file>\n");
+    exit(1);
+}
+
+static int
+hex_to_ascii(char a, char b)
+{
+    int high = hex_to_int(a) * 16;
+    int low = hex_to_int(b);
+    return high + low;
+}
+
+static int
+hex_to_int(char a)
+{
+    if (a >= 97) {
+  a -= 32;
+    }
+    int first = a / 16 - 3;
+    int second = a % 16;
+    int result = first*10 + second;
+    if (result > 9) {
+  result -= 1;
+    }
+    return result;
+}
 
 /* Returns a pseudo-random integer. */
 static int
