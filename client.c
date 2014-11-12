@@ -273,10 +273,10 @@ send_tls_message(int socketno, void *msg, int msg_len)
 {
   ssize_t write_size = write(socketno, msg, msg_len);
   if (write_size > 0){
-    return ERR_OK
+    return ERR_OK;
   }
   else {
-    return ERR_FAILURE
+    return ERR_FAILURE;
   }
   
 }
@@ -294,7 +294,19 @@ send_tls_message(int socketno, void *msg, int msg_len)
 int
 receive_tls_message(int socketno, void *msg, int msg_len, int msg_type)
 {
-  // YOUR CODE HERE
+  if (msg_type == ERR_FAILURE){
+    return ERR_FAILURE;
+  }
+  else{
+    ssize_t read_size = read(socketno, msg, msg_type);
+  }
+  
+  if (read_size > 0){
+      return ERR_OK;
+  }
+  else {
+    return ERR_FAILURE;
+  }
 }
 
 
