@@ -271,7 +271,7 @@ compute_master_secret(int ps, int client_random, int server_random, unsigned cha
 int
 send_tls_message(int socketno, void *msg, int msg_len)
 {
-  write_size = write(m_file, msg, msg_len);
+  ssize_t write_size = write(socketno, msg, msg_len);
   if (write_size > 0){
     return ERR_OK
   }
