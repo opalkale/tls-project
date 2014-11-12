@@ -294,11 +294,14 @@ send_tls_message(int socketno, void *msg, int msg_len)
 int
 receive_tls_message(int socketno, void *msg, int msg_len, int msg_type)
 {
+  ssize_t read_size;
+  
   if (msg_type == ERR_FAILURE){
     return ERR_FAILURE;
   }
   else{
-    ssize_t read_size = read(socketno, msg, msg_type);
+    
+    read_size = read(socketno, msg, msg_len);
   }
   
   if (read_size > 0){
