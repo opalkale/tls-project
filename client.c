@@ -461,6 +461,7 @@ get_cert_modulus(mpz_t result, char *cert)
     return ERR_FAILURE;
   }
   strncpy(modulus, srch, srch2-srch);
+  int err;
   err = mpz_set_str(result, modulus, 0);
   if (err == -1) {
     return ERR_FAILURE;
