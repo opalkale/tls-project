@@ -12,7 +12,6 @@
 
 /* The file descriptor for the socket connected to the server. */
 static int sockfd;
-
 static void perform_rsa(mpz_t result, mpz_t message, mpz_t d, mpz_t n);
 static int hex_to_ascii(char a, char b);
 static int hex_to_int(char a);
@@ -204,6 +203,14 @@ int main(int argc, char **argv) {
   }
 
  out:
+  // Testing send_tls_message
+  //static int testfd = 1;
+  //int *msg = 'h';
+  //int msg_len;
+  //msg_len= 1;
+  //send_tls_message(testfd, msg, msg_len);
+  //
+  
   close(sockfd);
   return 0;
 }
