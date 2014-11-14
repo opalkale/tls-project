@@ -132,6 +132,8 @@ int main(int argc, char **argv) {
   }
 
   // YOUR CODE HERE
+
+
   // IMPLEMENT THE TLS HANDSHAKE
 
   /*
@@ -149,6 +151,7 @@ int main(int argc, char **argv) {
   aes_init(&dec_ctx);
   
   // YOUR CODE HERE
+
   // SET AES KEYS
 
   fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
