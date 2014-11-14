@@ -354,36 +354,6 @@ perform_rsa(mpz_t result, mpz_t message, mpz_t e, mpz_t n)
   }
 }
 
-static void
-usage()
-{
-    printf("./proj0 -m <message_file> -n <modulus_file> -d <key_file>\n");
-    exit(1);
-}
-
-static int
-hex_to_ascii(char a, char b)
-{
-    int high = hex_to_int(a) * 16;
-    int low = hex_to_int(b);
-    return high + low;
-}
-
-static int
-hex_to_int(char a)
-{
-    if (a >= 97) {
-  a -= 32;
-    }
-    int first = a / 16 - 3;
-    int second = a % 16;
-    int result = first*10 + second;
-    if (result > 9) {
-  result -= 1;
-    }
-    return result;
-}
-
 /* Returns a pseudo-random integer. */
 static int
 random_int()
@@ -475,6 +445,7 @@ get_cert_exponent(mpz_t result, char *cert)
 int
 get_cert_modulus(mpz_t result, char *cert)
 {
+  int err;
   char *srch, *srch2;
   char modulus[RSA_MAX_LEN/2];
   memset(modulus, 0, RSA_MAX_LEN/2);
@@ -536,13 +507,13 @@ static int
 hex_to_int(char a)
 {
     if (a >= 97) {
-	a -= 32;
+  a -= 32;
     }
     int first = a / 16 - 3;
     int second = a % 16;
     int result = first*10 + second;
     if (result > 9) {
-	result -= 1;
+  result -= 1;
     }
     return result;
 }
