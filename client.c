@@ -132,7 +132,15 @@ int main(int argc, char **argv) {
   }
 
   // YOUR CODE HERE
+
+
   // IMPLEMENT THE TLS HANDSHAKE
+
+  // Test for 3.2
+  //[128]; //buf is a pointer to &buf[0], which is the address of the first element of the array buff
+  //send_tls_message(1, tls_msg, strlen(tls_msg));
+  //printf("hi\n");
+  // End Test
 
   /*
    * START ENCRYPTED MESSAGES
@@ -149,6 +157,7 @@ int main(int argc, char **argv) {
   aes_init(&dec_ctx);
   
   // YOUR CODE HERE
+
   // SET AES KEYS
 
   fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
@@ -204,6 +213,7 @@ int main(int argc, char **argv) {
   }
 
  out:
+
   close(sockfd);
   return 0;
 }
@@ -223,7 +233,15 @@ int main(int argc, char **argv) {
 void
 decrypt_cert(mpz_t decrypted_cert, cert_message *cert, mpz_t key_exp, mpz_t key_mod)
 {
-  // YOUR CODE HERE
+  // Initializing mpz_t variable
+  //mpz_t certificate_message;
+  //mpz_init(certificate_message);
+
+  // Changing type from string to mpz_t
+  //mpz_set_str(certificate_message, *cert, 16);
+
+  // Decrypting the certicate and storing it in decrypted_cert
+  //perform_rsa(decrypted_cert, certificate_message, key_exp, key_mod);
 }
 
 /*
@@ -271,7 +289,16 @@ compute_master_secret(int ps, int client_random, int server_random, unsigned cha
 int
 send_tls_message(int socketno, void *msg, int msg_len)
 {
-  // YOUR CODE HERE
+  ssize_t write_size;
+  write_size = write(socketno, *msg, msg_len);
+
+  if (write_size > 0){
+    return ERR_OK;
+  }
+  else {
+    return ERR_FAILURE;
+  }
+  
 }
 
 /*
@@ -287,7 +314,22 @@ send_tls_message(int socketno, void *msg, int msg_len)
 int
 receive_tls_message(int socketno, void *msg, int msg_len, int msg_type)
 {
-  // YOUR CODE HERE
+  ssize_t read_size;
+  
+  if (msg_type == ERR_FAILURE){
+    return ERR_FAILURE;
+  }
+  else{
+    
+    read_size = read(socketno, msg, msg_len);
+  }
+  
+  if (read_size > 0){
+      return ERR_OK;
+  }
+  else {
+    return ERR_FAILURE;
+  }
 }
 
 
@@ -322,36 +364,6 @@ perform_rsa(mpz_t result, mpz_t message, mpz_t e, mpz_t n)
     mpz_div_ui(e, e, 2);
     odd_num = mpz_odd_p(e);
   }
-}
-
-static void
-usage()
-{
-    printf("./proj0 -m <message_file> -n <modulus_file> -d <key_file>\n");
-    exit(1);
-}
-
-static int
-hex_to_ascii(char a, char b)
-{
-    int high = hex_to_int(a) * 16;
-    int low = hex_to_int(b);
-    return high + low;
-}
-
-static int
-hex_to_int(char a)
-{
-    if (a >= 97) {
-  a -= 32;
-    }
-    int first = a / 16 - 3;
-    int second = a % 16;
-    int result = first*10 + second;
-    if (result > 9) {
-  result -= 1;
-    }
-    return result;
 }
 
 /* Returns a pseudo-random integer. */
@@ -445,6 +457,7 @@ get_cert_exponent(mpz_t result, char *cert)
 int
 get_cert_modulus(mpz_t result, char *cert)
 {
+  int err;
   char *srch, *srch2;
   char modulus[RSA_MAX_LEN/2];
   memset(modulus, 0, RSA_MAX_LEN/2);
@@ -506,13 +519,13 @@ static int
 hex_to_int(char a)
 {
     if (a >= 97) {
-	a -= 32;
+  a -= 32;
     }
     int first = a / 16 - 3;
     int second = a % 16;
     int result = first*10 + second;
     if (result > 9) {
-	result -= 1;
+  result -= 1;
     }
     return result;
 }
