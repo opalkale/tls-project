@@ -281,7 +281,7 @@ compute_master_secret(int ps, int client_random, int server_random, unsigned cha
   SHA256_CTX ctx;
   sha256_init(&ctx);
 
-  unsigned char buffer1[4 *sizeof(int)];
+  unsigned char buffer[4 *sizeof(int)];
 
   memcpy(buffer, &ps, sizeof(int));
   memcpy(&buffer[sizeof(int)], &client_random, sizeof(int));
@@ -289,7 +289,7 @@ compute_master_secret(int ps, int client_random, int server_random, unsigned cha
   memcpy(&buffer[3*sizeof(int)], &ps, sizeof(int));
 
   sha256_update(&ctx, buffer, 4 * sizeof(int));
-  
+
   sha256_final(&ctx, master_secret);
 
 }
