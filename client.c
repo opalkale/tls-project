@@ -136,6 +136,12 @@ int main(int argc, char **argv) {
 
   // IMPLEMENT THE TLS HANDSHAKE
 
+  // Test for 3.2
+  //[128]; //buf is a pointer to &buf[0], which is the address of the first element of the array buff
+  //send_tls_message(1, tls_msg, strlen(tls_msg));
+  //printf("hi\n");
+  // End Test
+
   /*
    * START ENCRYPTED MESSAGES
    */
@@ -207,6 +213,7 @@ int main(int argc, char **argv) {
   }
 
  out:
+
   close(sockfd);
   return 0;
 }
@@ -227,14 +234,14 @@ void
 decrypt_cert(mpz_t decrypted_cert, cert_message *cert, mpz_t key_exp, mpz_t key_mod)
 {
   // Initializing mpz_t variable
-  mpz_t certificate_message;
-  mpz_init(certificate_message);
+  //mpz_t certificate_message;
+  //mpz_init(certificate_message);
 
   // Changing type from string to mpz_t
-  mpz_set_str(certificate_message, *cert, 16);
+  //mpz_set_str(certificate_message, *cert, 16);
 
   // Decrypting the certicate and storing it in decrypted_cert
-  perform_rsa(decrypted_cert, certificate_message, key_exp, key_mod);
+  //perform_rsa(decrypted_cert, certificate_message, key_exp, key_mod);
 }
 
 /*
@@ -282,7 +289,9 @@ compute_master_secret(int ps, int client_random, int server_random, unsigned cha
 int
 send_tls_message(int socketno, void *msg, int msg_len)
 {
-  ssize_t write_size = write(socketno, msg, msg_len);
+  ssize_t write_size;
+  write_size = write(socketno, *msg, msg_len);
+
   if (write_size > 0){
     return ERR_OK;
   }
