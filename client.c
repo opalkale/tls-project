@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
   ssize_t read_size, write_size;
   struct sockaddr_in client_addr;
   tls_msg err_msg, send_msg, rcv_msg;
-  mpz_t client_exp, client_mod;
+  mpz_t client_exp, client_mod; 
   fd_set readfds;
   struct timeval tv;
 
@@ -234,14 +234,16 @@ void
 decrypt_cert(mpz_t decrypted_cert, cert_message *cert, mpz_t key_exp, mpz_t key_mod)
 {
   // Initializing mpz_t variable
-  //mpz_t certificate_message;
-  //mpz_init(certificate_message);
+  mpz_t certificate_message;
+
+  mpz_init(certificate_message);
 
   // Changing type from string to mpz_t
-  //mpz_set_str(certificate_message, *cert, 16);
+  mpz_set_str(certificate_message, cert->cert, 16);
+
 
   // Decrypting the certicate and storing it in decrypted_cert
-  //perform_rsa(decrypted_cert, certificate_message, key_exp, key_mod);
+  perform_rsa(decrypted_cert, certificate_message, key_exp, key_mod);
 }
 
 /*
