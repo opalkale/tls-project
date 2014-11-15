@@ -278,15 +278,19 @@ void
 compute_master_secret(int ps, int client_random, int server_random, unsigned char *master_secret)
 {
   // YOUR CODE HERE
-  SHA256_CTX;
-  sha256_init(SHA256_CTX *ctx);
+  SHA256_CTX ctx;
+  sha256_init(&ctx);
 
-  unsigned char hash[4];
-  hash = 
+  unsigned char buffer1[4 *sizeof(int)];
 
-  sha256_update(SHA256_CTX *ctx, unsigned char data[], int len)
+  memcpy(buffer, &ps, sizeof(int));
+  memcpy(&buffer[sizeof(int)], &client_random, sizeof(int));
+  memcpy(&buffer[2*sizeof(int)], &server_random, sizeof(int));
+  memcpy(&buffer[3*sizeof(int)], &ps, sizeof(int));
 
-  sha256_final(SHA256_CTX *ctx, unsigned char hash[]);
+  sha256_update(&ctx, buffer, 4 * sizeof(int));
+  
+  sha256_final(&ctx, master_secret);
 
 }
 
@@ -303,7 +307,7 @@ int
 send_tls_message(int socketno, void *msg, int msg_len)
 {
   ssize_t write_size;
-  write_size = write(socketno, *msg, msg_len);
+  write_size = write(socketno, msg, msg_len);
 
   if (write_size > 0){
     return ERR_OK;
