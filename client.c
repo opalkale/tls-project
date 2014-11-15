@@ -261,8 +261,12 @@ decrypt_cert(mpz_t decrypted_cert, cert_message *cert, mpz_t key_exp, mpz_t key_
 void
 decrypt_verify_master_secret(mpz_t decrypted_ms, ps_msg *ms_ver, mpz_t key_exp, mpz_t key_mod)
 {
-  // YOUR CODE HERE
-
+  // YOUR CODE HER  
+  mpz_t master_message;
+  mpz_init(master_message);
+  mpz_set_str(master_message, ms_ver->ps, 16);
+  perform_rsa(decrypted_ms, master_message, key_exp, key_mod);
+  
 }
 
 /*
