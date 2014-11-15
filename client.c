@@ -225,10 +225,11 @@ decrypt_cert(mpz_t decrypted_cert, cert_message *cert, mpz_t key_exp, mpz_t key_
 {
   // Initializing mpz_t variable
   mpz_t certificate_message;
+
   mpz_init(certificate_message);
 
   // Changing type from string to mpz_t
-  mpz_set_str(certificate_message, *cert, 16);
+  mpz_set_str(certificate_message, cert->cert, 16);
 
   // Decrypting the certicate and storing it in decrypted_cert
   perform_rsa(decrypted_cert, certificate_message, key_exp, key_mod);
