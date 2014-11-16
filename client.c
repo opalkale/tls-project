@@ -135,13 +135,52 @@ int main(int argc, char **argv) {
 
 
   // IMPLEMENT THE TLS HANDSHAKE
+  // Client Hello and Setup
+  hello_message client_hello_send[HELLO_MSG_SIZE];
+  (*client_hello_send).type = CLIENT_HELLO;
+  (*client_hello_send).random = random_int();
+  (*client_hello_send).cipher_suite = TLS_RSA_WITH_AES_128_ECB_SHA256;
+  send_tls_message(sockfd, client_hello_send, HELLO_MSG_SIZE);
+ 
+  // Server Hello & Setup
+  hello_message server_hello_rcv[HELLO_MSG_SIZE];
+  receive_tls_message(sockfd, server_hello_rcv, HELLO_MSG_SIZE, SERVER_HELLO);
+    
+  // Client Certificate
+  cert_message client_cert_send[CERT_MSG_SIZE];
+  (*client_cert_send).type = CLIENT_CERTIFICATE;
+  fread((*client_cert_send).cert, RSA_MAX_LEN, 1, c_file);
 
-  // Test for 3.2
-  //[128]; //buf is a pointer to &buf[0], which is the address of the first element of the array buff
-  //send_tls_message(1, tls_msg, strlen(tls_msg));
-  //printf("hi\n");
-  // End Test
+  //Printing the client certificate message
+  printf("%s\n",(*client_cert_send).cert);
+  send_tls_message(sockfd, client_cert_send, CERT_MSG_SIZE);
+  printf("Certicate sent\n");
 
+  // Server Certificate
+  cert_message server_cert_rcv[CERT_MSG_SIZE];
+  receive_tls_message(sockfd, server_cert_rcv, CERT_MSG_SIZE, SERVER_CERTIFICATE);
+  printf("Certificate received\n");
+
+  mpz_t decrypted_cert;
+  mpz_t exp;
+  mpz_t mod;
+  mpz_init(decrypted_cert);
+  mpz_init(exp);
+  mpz_init(mod);
+
+  mpz_set_str(exp, CA_EXPONENT, 16);
+  mpz_set_str(mod, CA_MODULUS, 16);
+
+  decrypt_cert(decrypted_cert, server_cert_rcv, exp, mod); 
+  char output_str[RSA_MAX_LEN];
+  mpz_get_ascii(output_str, decrypted_cert);
+  printf("%s\n", output_str);
+
+  //gmp_printf ("%s is an mpz %Zd\n", "here", decrypted_cert);
+  
+  // Premaster Secret 
+  //ps_msg ps_send[PS_MSG_SIZE];
+  //(*ps_send).type = PREMASTER_SECRET;
   /*
    * START ENCRYPTED MESSAGES
    */
@@ -240,8 +279,6 @@ decrypt_cert(mpz_t decrypted_cert, cert_message *cert, mpz_t key_exp, mpz_t key_
 
   // Changing type from string to mpz_t
   mpz_set_str(certificate_message, cert->cert, 16);
-
-
   // Decrypting the certicate and storing it in decrypted_cert
   perform_rsa(decrypted_cert, certificate_message, key_exp, key_mod);
 }
@@ -262,6 +299,11 @@ void
 decrypt_verify_master_secret(mpz_t decrypted_ms, ps_msg *ms_ver, mpz_t key_exp, mpz_t key_mod)
 {
   // YOUR CODE HERE
+  mpz_t master_message;
+  mpz_init(master_message);
+  mpz_set_str(master_message, ms_ver->ps, 16);
+  perform_rsa(decrypted_ms, master_message, key_exp, key_mod);
+
 }
 
 /*
@@ -277,6 +319,19 @@ void
 compute_master_secret(int ps, int client_random, int server_random, unsigned char *master_secret)
 {
   // YOUR CODE HERE
+  SHA256_CTX ctx;
+  sha256_init(&ctx);
+
+  unsigned char buffer[4 *sizeof(int)];
+
+  memcpy(buffer, &ps, sizeof(int));
+  memcpy(&buffer[sizeof(int)], &client_random, sizeof(int));
+  memcpy(&buffer[2*sizeof(int)], &server_random, sizeof(int));
+  memcpy(&buffer[3*sizeof(int)], &ps, sizeof(int));
+
+  sha256_update(&ctx, buffer, 4 * sizeof(int));
+
+  sha256_final(&ctx, master_secret);
 }
 
 /*
@@ -292,15 +347,18 @@ int
 send_tls_message(int socketno, void *msg, int msg_len)
 {
   ssize_t write_size;
-  write_size = write(socketno, *msg, msg_len);
-
-  if (write_size > 0){
+  printf("SENDING HELLO MESSAGE TO SERVER\n");
+  write_size = write(socketno, msg, msg_len);
+  printf("%zd\n", write_size);
+  printf("HELLO MESSAGE SENT TO SERVER\n");
+  if (write_size > (ssize_t) 0){
+    printf("Error OK\n");
     return ERR_OK;
   }
   else {
+    printf("Error Failure\n");
     return ERR_FAILURE;
-  }
-  
+  } 
 }
 
 /*
@@ -318,16 +376,19 @@ receive_tls_message(int socketno, void *msg, int msg_len, int msg_type)
 {
   ssize_t read_size;
   
-  if (msg_type == ERR_FAILURE){
+  if (msg_type != SERVER_HELLO || CLIENT_CERTIFICATE){
     return ERR_FAILURE;
   }
   else{
-    
+     
     read_size = read(socketno, msg, msg_len);
+    printf("Read Size:\n");
+    printf("%zd\n", read_size);
   }
   
   if (read_size > 0){
-      return ERR_OK;
+    printf("Error Ok\n");  
+    return ERR_OK;
   }
   else {
     return ERR_FAILURE;
