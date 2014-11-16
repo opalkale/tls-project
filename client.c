@@ -162,20 +162,38 @@ int main(int argc, char **argv) {
   printf("Certificate received\n");
 
   mpz_t decrypted_cert;
-  mpz_t exp;
-  mpz_t mod;
+  mpz_t ca_exp;
+  mpz_t ca_mod;
   mpz_init(decrypted_cert);
-  mpz_init(exp);
-  mpz_init(mod);
+  mpz_init(ca_exp);
+  mpz_init(ca_mod);
 
-  mpz_set_str(exp, CA_EXPONENT, 16);
-  mpz_set_str(mod, CA_MODULUS, 16);
+  mpz_set_str(ca_exp, CA_EXPONENT, 16);
+  mpz_set_str(ca_mod, CA_MODULUS, 16);
 
-  decrypt_cert(decrypted_cert, server_cert_rcv, exp, mod); 
-  char output_str[RSA_MAX_LEN];
+  // Decrypt Server Certificate
+  decrypt_cert(decrypted_cert, server_cert_rcv, ca_exp, ca_mod); 
+  char output_str[CERT_MSG_SIZE];
   mpz_get_ascii(output_str, decrypted_cert);
-  printf("%s\n", output_str);
+//  printf("%s\n", output_str);
 
+  // Extracting keys from certificate 
+  mpz_t public_exp;
+  mpz_t public_mod;
+  mpz_init(public_exp);
+  mpz_init(public_mod);
+  get_cert_exponent(public_exp, output_str);
+  get_cert_modulus(public_mod, output_str);
+
+  // Sending premaster secret
+  printf("Sending premaster secret\n");
+  ps_msg premaster[PS_MSG_SIZE];
+  (*premaster).type = PREMASTER_SECRET;
+  int ps_int = random_int();
+  char secret[INT_SIZE];
+  itoa(ps_int,(*premaster).ps, 10);
+  
+  //send_tls_message(socketfd,);
   //gmp_printf ("%s is an mpz %Zd\n", "here", decrypted_cert);
   
   // Premaster Secret 
