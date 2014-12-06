@@ -180,6 +180,7 @@ int main(int argc, char **argv) {
   mpz_init(public_mod);
   get_cert_exponent(public_exp, output_str);
   get_cert_modulus(public_mod, output_str);
+<<<<<<< HEAD
     
 // Sending premaster secret
   ps_msg ps_send[PS_MSG_SIZE];
@@ -224,6 +225,7 @@ int main(int argc, char **argv) {
     }
     i++;
   }
+
   /*
    * START ENCRYPTED MESSAGES
    */
@@ -396,6 +398,7 @@ send_tls_message(int socketno, void *msg, int msg_len)
     return ERR_OK;
   }
   else {
+    printf("Error Failure\n");
     return ERR_FAILURE;
   } 
 }
