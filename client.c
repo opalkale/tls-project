@@ -133,14 +133,98 @@ int main(int argc, char **argv) {
 
   // YOUR CODE HERE
 
-
   // IMPLEMENT THE TLS HANDSHAKE
+  // Client Hello and Setup
+  hello_message client_hello_send[HELLO_MSG_SIZE];
+  (*client_hello_send).type = CLIENT_HELLO;
+  (*client_hello_send).random = random_int();
+  (*client_hello_send).cipher_suite = TLS_RSA_WITH_AES_128_ECB_SHA256;
+  send_tls_message(sockfd, client_hello_send, HELLO_MSG_SIZE);
+ 
+  // Server Hello & Setup
+  hello_message server_hello_rcv[HELLO_MSG_SIZE];
+  receive_tls_message(sockfd, server_hello_rcv, HELLO_MSG_SIZE, SERVER_HELLO);
+    
+  // Client Certificate
+  cert_message client_cert_send[CERT_MSG_SIZE];
+  (*client_cert_send).type = CLIENT_CERTIFICATE;
+  fread((*client_cert_send).cert, RSA_MAX_LEN, 1, c_file);
 
-  // Test for 3.2
-  //[128]; //buf is a pointer to &buf[0], which is the address of the first element of the array buff
-  //send_tls_message(1, tls_msg, strlen(tls_msg));
-  //printf("hi\n");
-  // End Test
+  //Printing the client certificate message
+  //printf("%s\n",(*client_cert_send).cert);
+  send_tls_message(sockfd, client_cert_send, CERT_MSG_SIZE);
+
+  // Server Certificate
+  cert_message server_cert_rcv[CERT_MSG_SIZE];
+  receive_tls_message(sockfd, server_cert_rcv, CERT_MSG_SIZE, SERVER_CERTIFICATE);
+
+  mpz_t decrypted_cert;
+  mpz_t ca_exp;
+  mpz_t ca_mod;
+  mpz_init(decrypted_cert);
+  mpz_init(ca_exp);
+  mpz_init(ca_mod);
+
+  mpz_set_str(ca_exp, CA_EXPONENT, 0);
+  mpz_set_str(ca_mod, CA_MODULUS, 0);
+
+  // Decrypt Server Certificate
+  decrypt_cert(decrypted_cert, server_cert_rcv, ca_exp, ca_mod); 
+  char output_str[CERT_MSG_SIZE];
+  mpz_get_ascii(output_str, decrypted_cert);
+
+  // Extracting keys from certificate 
+  mpz_t public_exp;
+  mpz_t public_mod;
+  mpz_init(public_exp);
+  mpz_init(public_mod);
+  get_cert_exponent(public_exp, output_str);
+  get_cert_modulus(public_mod, output_str);
+<<<<<<< HEAD
+    
+// Sending premaster secret
+  ps_msg ps_send[PS_MSG_SIZE];
+  (*ps_send).type = PREMASTER_SECRET;
+  int ps_int = random_int();
+
+  mpz_t random_mpz;
+  mpz_t random_mpz_enc;
+  mpz_init(random_mpz);
+  mpz_init(random_mpz_enc);
+  mpz_set_ui(random_mpz, ps_int);
+  perform_rsa(random_mpz_enc, random_mpz, public_exp, public_mod);
+
+  char enc_ps_array[RSA_MAX_LEN];
+  mpz_get_str(enc_ps_array, 16, random_mpz_enc); 
+  strncpy((*ps_send).ps, enc_ps_array, RSA_MAX_LEN);
+  send_tls_message(sockfd, ps_send, PS_MSG_SIZE);
+  
+  // Master Secret
+  char master_secret[4 * sizeof(int)]; 
+  char master_secret_str[4*sizeof(int)];
+  compute_master_secret(ps_int, (*client_hello_send).random, (*server_hello_rcv).random, master_secret);
+  memcpy(master_secret_str, hex_to_str(master_secret, sizeof(int)*4), sizeof(int)*4);
+
+  // Compare Master Secrets
+  ps_msg server_master[PS_MSG_SIZE];
+  receive_tls_message(sockfd, server_master, PS_MSG_SIZE, VERIFY_MASTER_SECRET);
+
+  mpz_t decrypted_master;
+  mpz_init(decrypted_master);
+
+  decrypt_verify_master_secret(decrypted_master, server_master, client_exp, client_mod);  
+
+  char server_master_str[RSA_MAX_LEN];
+  mpz_get_str(server_master_str, 16, decrypted_master);   
+
+  int i = 0;
+  while(master_secret_str[i]){
+    if(toupper(server_master_str[i]) != master_secret_str[i]){
+	perror("Locally computed master secret not the same as server's \n");
+	cleanup();
+    }
+    i++;
+  }
 
   /*
    * START ENCRYPTED MESSAGES
@@ -157,7 +241,8 @@ int main(int argc, char **argv) {
   aes_init(&dec_ctx);
   
   // YOUR CODE HERE
-
+  aes_setkey_enc(&enc_ctx, master_secret, 128);
+  aes_setkey_dec(&dec_ctx, master_secret, 128);
   // SET AES KEYS
 
   fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
@@ -239,9 +324,7 @@ decrypt_cert(mpz_t decrypted_cert, cert_message *cert, mpz_t key_exp, mpz_t key_
   mpz_init(certificate_message);
 
   // Changing type from string to mpz_t
-  mpz_set_str(certificate_message, cert->cert, 16);
-
-
+  mpz_set_str(certificate_message, cert->cert, 0);
   // Decrypting the certicate and storing it in decrypted_cert
   perform_rsa(decrypted_cert, certificate_message, key_exp, key_mod);
 }
@@ -262,6 +345,11 @@ void
 decrypt_verify_master_secret(mpz_t decrypted_ms, ps_msg *ms_ver, mpz_t key_exp, mpz_t key_mod)
 {
   // YOUR CODE HERE
+  mpz_t master_message;
+  mpz_init(master_message);
+  mpz_set_str(master_message, ms_ver->ps, 16);
+  perform_rsa(decrypted_ms, master_message, key_exp, key_mod);
+
 }
 
 /*
@@ -277,6 +365,19 @@ void
 compute_master_secret(int ps, int client_random, int server_random, unsigned char *master_secret)
 {
   // YOUR CODE HERE
+  SHA256_CTX ctx;
+  sha256_init(&ctx);
+
+  unsigned char buffer[4 *sizeof(int)];
+
+  memcpy(buffer, &ps, sizeof(int));
+  memcpy(&buffer[sizeof(int)], &client_random, sizeof(int));
+  memcpy(&buffer[2*sizeof(int)], &server_random, sizeof(int));
+  memcpy(&buffer[3*sizeof(int)], &ps, sizeof(int));
+
+  sha256_update(&ctx, buffer, 4 * sizeof(int));
+
+  sha256_final(&ctx, master_secret);
 }
 
 /*
@@ -292,15 +393,14 @@ int
 send_tls_message(int socketno, void *msg, int msg_len)
 {
   ssize_t write_size;
-  write_size = write(socketno, *msg, msg_len);
-
-  if (write_size > 0){
+  write_size = write(socketno, msg, msg_len);
+  if (write_size == msg_len){
     return ERR_OK;
   }
   else {
+    printf("Error Failure\n");
     return ERR_FAILURE;
-  }
-  
+  } 
 }
 
 /*
@@ -317,17 +417,11 @@ int
 receive_tls_message(int socketno, void *msg, int msg_len, int msg_type)
 {
   ssize_t read_size;
+     
+  read_size = read(socketno, msg, msg_len);
   
-  if (msg_type == ERR_FAILURE){
-    return ERR_FAILURE;
-  }
-  else{
-    
-    read_size = read(socketno, msg, msg_len);
-  }
-  
-  if (read_size > 0){
-      return ERR_OK;
+  if (read_size > ((ssize_t) 0) && *((int * )msg) == msg_type){
+    return ERR_OK;
   }
   else {
     return ERR_FAILURE;

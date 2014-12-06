@@ -1,0 +1,18 @@
+Trent McCormick, Opal Kale
+cs170-nv, cs170-df
+
+1. An attacker intercepting packets could check the 'type' field of all packets and 
+when she sees a premaster or master secret being sent, she could modify the hash so that
+either the client or server get an incorrect master secret.
+
+2. In the function random_int() the random numbers are chosen by srand() and a seed from 
+our computer's timestamp. An attacker could perform a man-in-the-middle attack because they could
+try to sync their computer's timestamp so that they get the same random numbers.
+
+3. A downgrade attack could work on our TLS system because it could force the server to use
+a less secure cipher suite (for example SHA128 instead of SHA256) that is possible to crack with 
+enough computational power. A way to mitigate this attack would be to force the server to only 
+accept one cipher suite for asymmetric encrpytion and one cipher suite for symmetric encryption.
+
+4. If an attacker intercepts our hello message they could then force us to think they are the 
+server we are connecting with.
